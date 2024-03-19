@@ -4,18 +4,22 @@ param(
 )
 
 if (-not (Test-Path $ddnsFile)) {
-    Write-Host "Arquivo de DDNS n�o encontrado!" -ForegroundColor Red
+    Write-Host "Arquivo de DDNS não encontrado!" -ForegroundColor Red
     exit
 }
 
 $ddns = Get-Content $ddnsFile
+
+Add-Type -AssemblyName System.Windows.Forms
+
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 while($true) {
     $results = @()
 
     foreach ($tcpserveraddress in $ddns) {
         $currentTime = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
-        Write-Host -NoNewline "`r$currentTime - Verificacao DDNS:" -ForegroundColor Green
+        Write-Host -NoNewline "`r$currentTime - Verificação DDNS:" -ForegroundColor Green
         $tcnArgs = @{
             ComputerName = $tcpserveraddress
             Port = $port
@@ -28,6 +32,8 @@ while($true) {
             "Ativo"
         } else {
             "Inativo"
+            # Exibe uma mensagem de aviso
+            [System.Windows.Forms.MessageBox]::Show("O DDNS $tcpserveraddress está inativo!", "Aviso", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
         }
 
         $results += [PSCustomObject]@{
@@ -39,6 +45,6 @@ while($true) {
 
     $results | Format-Table -AutoSize -Property DDNS, Port, Status
 
-    Write-Host "`nAguardando proximo ciclo de verificacao`n" -ForegroundColor Yellow
+    Write-Host "`nAguardando próximo ciclo de verificação`n" -ForegroundColor Yellow
     Start-Sleep -Seconds 300
 }
