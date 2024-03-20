@@ -9,9 +9,9 @@ if (-not (Test-Path $ddnsFile)) {
 }
 
 $ddns = Get-Content $ddnsFile
+$statusAnterior = @{}  # Dicionário para armazenar o status anterior de cada DDNS
 
 Add-Type -AssemblyName System.Windows.Forms
-
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 while($true) {
@@ -32,8 +32,19 @@ while($true) {
             "Ativo"
         } else {
             "Inativo"
-            # Exibe uma mensagem de aviso
-            [System.Windows.Forms.MessageBox]::Show("O DDNS $tcpserveraddress está inativo!", "Aviso", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+        }
+
+        # Verifica se o status atual é diferente do status anterior
+        if ($status -ne $statusAnterior[$tcpserveraddress]) {
+            if ($status -eq "Inativo") {
+                # Exibe uma mensagem de aviso apenas se o DDNS estiver inativo no ciclo atual
+                [System.Windows.Forms.MessageBox]::Show("O DDNS $tcpserveraddress está inativo!", "Aviso", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            } else {
+                # Exibe uma mensagem de notificação se o DDNS mudar de inativo para ativo
+                [System.Windows.Forms.MessageBox]::Show("O DDNS $tcpserveraddress está ativo novamente!", "Notificação", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+            }
+            # Atualiza o status anterior com o status atual
+            $statusAnterior[$tcpserveraddress] = $status
         }
 
         $results += [PSCustomObject]@{
@@ -46,5 +57,5 @@ while($true) {
     $results | Format-Table -AutoSize -Property DDNS, Port, Status
 
     Write-Host "`nAguardando próximo ciclo de verificação`n" -ForegroundColor Yellow
-    Start-Sleep -Seconds 300
+    Start-Sleep -Seconds 5
 }
